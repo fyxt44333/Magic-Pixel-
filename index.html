@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magic Pixel Ultimate</title>
+  <script src="tesseract.min.js"></script>
+  <script src="jspdf.umd.min.js"></script>
+  <script src="pdf.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #121212;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #6200ea;
+      padding: 1rem;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+      color: white;
+    }
+    .container {
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    .section {
+      background-color: #1e1e1e;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    h2 {
+      margin-top: 0;
+    }
+    input[type="file"] {
+      width: 100%;
+      padding: 0.75rem;
+      background: #2e2e2e;
+      color: white;
+      border: 1px solid #444;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      padding: 1rem;
+      background: #2e2e2e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      resize: vertical;
+    }
+    button {
+      background-color: #03dac6;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      color: black;
+      border-radius: 8px;
+      margin: 5px 3px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #00bfa5;
+    }
+    .actions {
+      margin-top: 1rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>✨ Magic Pixel Ultimate</header>
+  <div class="container">
+
+    <div class="section">
+      <h2>📤 Upload File (Image or PDF)</h2>
+      <input type="file" id="fileInput" accept="image/*,application/pdf" />
+      <div class="actions">
+        <button onclick="extractText()">Extract Text</button>
+        <button onclick="clearOutput()">Clear</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📝 Extracted Text</h2>
+      <textarea id="outputText" placeholder="Your extracted text will appear here..."></textarea>
+      <div class="actions">
+        <button onclick="copyText()">Copy to Clipboard</button>
+        <button onclick="downloadAsPDF()">Download as PDF</button>
+        <button onclick="downloadAsWord()">Download as DOC</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let extractedText = "";
+    const outputText = document.getElementById("outputText");
+
+    function clearOutput() {
+      extractedText = "";
+      outputText.value = "";
+    }
+
+    function copyText() {
+      navigator.clipboard.writeText(outputText.value).then(() => {
+        alert("Text copied to clipboard!");
+      });
+    }
+
+    async function extractText() {
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) return alert("Please select a file.");
+
+      outputText.value = "Processing... Please wait.";
+
+      if (file.type.startsWith("image/")) {
+        const imageURL = URL.createObjectURL(file);
+        const result = await Tesseract.recognize(imageURL, 'eng');
+        extractedText = result.data.text;
+        outputText.value = extractedText;
+      } else if (file.type === "application/pdf") {
+        const reader = new FileReader();
+        reader.onload = async function() {
+          const typedarray = new Uint8Array(this.result);
+          const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+          let textContent = "";
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            textContent += content.items.map(item => item.str).join(" ") + "\n";
+          }
+          extractedText = textContent;
+          outputText.value = extractedText;
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        outputText.value = "Unsupported file type.";
+      }
+    }
+
+    function downloadAsPDF() {
+      if (!outputText.value) return alert("Nothing to download!");
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const lines = doc.splitTextToSize(outputText.value, 180);
+      doc.text(lines, 10, 10);
+      doc.save("magic_text.pdf");
+    }
+
+    function downloadAsWord() {
+      if (!outputText.value) return alert("Nothing to download!");
+      const blob = new Blob(["\uFEFF" + outputText.value], { type: "application/msword" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "magic_text.doc";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>

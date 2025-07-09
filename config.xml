@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.magicpixel.pro" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+  <name>MagicPixel Pro</name>
+  <description>Image to Text + PDF + Word App</description>
+  <author email="support@example.com">Magic Team</author>
+  <content src="index.html" />
+  <access origin="*" />
+  <allow-navigation href="*" />
+  <preference name="android-minSdkVersion" value="22" />
+  <preference name="android-targetSdkVersion" value="33" />
+  <platform name="android">
+    <allow-intent href="market:*" />
+    <icon density="mdpi" src="icon.png" />
+  </platform>
+</widget>
